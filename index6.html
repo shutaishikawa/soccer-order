@@ -1,0 +1,1883 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>サッカーオーダー</title>
+<style>
+* {
+    box-sizing: border-box;
+}
+body {
+    margin: 0;
+    font-family: Arial, "Noto Sans JP", sans-serif;
+    background: #f2f3f5;
+    color: #222;
+}
+header {
+    background: #222;
+    color: white;
+    text-align: center;
+    padding: 12px;
+}
+header h1 {
+    margin: 0;
+    font-size: 24px;
+}
+main {
+    width: 96%;
+    max-width: 1200px;
+    margin: 15px auto 50px;
+}
+button {
+    border: 0;
+    border-radius: 8px;
+    padding: 10px 15px;
+    font-size: 15px;
+    cursor: pointer;
+}
+button:hover {
+    opacity: .85;
+}
+.green { background: #198754; color: white; }
+.blue { background: #2878d8; color: white; }
+.red { background: #dc3545; color: white; }
+.gray { background: #777; color: white; }
+.black { background: #222; color: white; }
+.register {
+    background: white;
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 15px;
+}
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+label {
+    font-weight: bold;
+}
+input,
+select {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    margin-bottom: 12px;
+    border: 1px solid #ccc;
+    border-radius: 7px;
+    font-size: 15px;
+    background: white;
+}
+.multi {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    margin-top: 6px;
+}
+.check {
+    position: relative;
+}
+.check input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.check label {
+    display: block;
+    text-align: center;
+    padding: 8px 3px;
+    background: #eee;
+    border: 2px solid transparent;
+    border-radius: 7px;
+    cursor: pointer;
+    font-size: 13px;
+}
+.check input:checked + label {
+    background: #b9e8bf;
+    border-color: #198754;
+}
+.selected-text {
+    color: #666;
+    font-size: 13px;
+    margin: 5px 0 12px;
+}
+.share-area {
+    text-align: center;
+    margin: 15px 0;
+}
+.order-area {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 18px;
+}
+.field-wrapper {
+    flex-shrink: 0;
+}
+.field-title {
+    margin: 0 0 8px;
+}
+.field {
+    position: relative;
+    width: min(68vw, 650px);
+    height: min(82vh, 780px);
+    min-height: 580px;
+    background: #4caf50;
+    border: 4px solid white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,.15);
+}
+.field-line-horizontal {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 100%;
+    border-top: 2px solid rgba(255,255,255,.8);
+    pointer-events: none;
+}
+.center-circle {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 120px;
+    height: 120px;
+    transform: translate(-50%, -50%);
+    border: 2px solid rgba(255,255,255,.8);
+    border-radius: 50%;
+    pointer-events: none;
+}
+.penalty-area {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 45%;
+    height: 16%;
+    border: 2px solid rgba(255,255,255,.8);
+    pointer-events: none;
+}
+.penalty-top {
+    top: 0;
+    border-top: 0;
+}
+.penalty-bottom {
+    bottom: 0;
+    border-bottom: 0;
+}
+/* 希望ポジション */
+.zone {
+    position: absolute;
+    width: 82px;
+    height: 46px;
+    transform: translate(-50%, -50%);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: bold;
+    pointer-events: none;
+    z-index: 2;
+}
+.zone.main-position {
+    display: flex;
+    background: rgba(0,75,25,.92);
+    border: 3px solid #003b13;
+    color: white;
+}
+.zone.sub-position {
+    display: flex;
+    background: rgba(190,240,195,.9);
+    border: 3px solid #65bd6d;
+    color: #14551b;
+}
+/* 選手 */
+.player {
+    position: absolute;
+    width: 56px;
+    height: 56px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: white;
+    border: 3px solid #222;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+    z-index: 10;
+}
+.player:active {
+    cursor: grabbing;
+}
+.player-name {
+    position: absolute;
+    top: 56px;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    text-shadow: 1px 1px 4px black;
+}
+.drop-highlight {
+    outline: 4px solid #ffe600;
+}
+/* ベンチ */
+.bench {
+    width: 270px;
+    background: white;
+    border-radius: 12px;
+    padding: 13px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,.1);
+}
+.bench h2 {
+    margin-top: 0;
+}
+.bench-player {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    padding: 9px;
+    margin: 6px 0;
+    background: #eee;
+    border-radius: 8px;
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+}
+.bench-player:active {
+    cursor: grabbing;
+}
+.bench-number {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid #222;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+.bench-name {
+    font-weight: bold;
+}
+.bench-position {
+    color: #777;
+    font-size: 12px;
+}
+/* 選手情報 */
+.info {
+    display: none;
+    background: white;
+    border-radius: 12px;
+    padding: 18px;
+    margin: 18px auto;
+    max-width: 650px;
+}
+.info h2 {
+    margin-top: 0;
+}
+.style-box {
+    background: #eee;
+    border-radius: 8px;
+    padding: 12px;
+    margin: 12px 0;
+}
+.info-buttons,
+.edit-buttons {
+    display: flex;
+    gap: 8px;
+}
+.info-buttons button,
+.edit-buttons button {
+    flex: 1;
+}
+#editArea {
+    display: none;
+    margin-top: 15px;
+    padding: 15px;
+    background: #f5f5f5;
+    border-radius: 10px;
+}
+@media (max-width: 800px) {
+    .order-area {
+        flex-direction: column;
+        align-items: center;
+    }
+    .field {
+        width: 95vw;
+        height: 125vw;
+        min-height: 500px;
+        max-height: 760px;
+    }
+    .bench {
+        width: 95vw;
+    }
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+    .multi {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    .player {
+        width: 50px;
+        height: 50px;
+    }
+    .player-name {
+        top: 50px;
+        font-size: 12px;
+    }
+}
+</style>
+</head>
+<body>
+<header>
+    <h1>⚽ サッカーオーダー</h1>
+</header>
+<main>
+<!-- 選手登録 -->
+<section class="register">
+<h2>選手登録</h2>
+<div class="form-grid">
+    <div>
+        <label for="nameInput">名前</label>
+        <input id="nameInput" type="text" placeholder="例：山田">
+    </div>
+    <div>
+        <label for="numberInput">背番号</label>
+        <input id="numberInput" type="number" placeholder="10">
+    </div>
+</div>
+<label for="mainPosition">メインポジション</label>
+<!-- ポジションをHTMLに直接記述 -->
+<select id="mainPosition">
+    <option value="">選択してください</option>
+    <option value="CF">CF</option>
+    <option value="RWG">RWG</option>
+    <option value="LWG">LWG</option>
+    <option value="ST">ST</option>
+    <option value="OMF">OMF</option>
+    <option value="CMF">CMF</option>
+    <option value="LMF">LMF</option>
+    <option value="RMF">RMF</option>
+    <option value="DMF">DMF</option>
+    <option value="LSB">LSB</option>
+    <option value="RSB">RSB</option>
+    <option value="CB">CB</option>
+    <option value="GK">GK</option>
+</select>
+<label>サブポジション（複数選択可）</label>
+<div id="registerSub" class="multi">
+    <div class="check">
+        <input type="checkbox" id="regCF" value="CF">
+        <label for="regCF">CF</label>
+    </div>
+    <div class="check">
+        <input type="checkbox" id="regRWG" value="RWG">
+        <label for="regRWG">RWG</label>
+    </div>
+    <div class="check">
+        <input type="checkbox" id="regLWG" value="LWG">
+        <label for="regLWG">LWG</label>
+    </div>
+    <div class="check">
+        <input type="checkbox" id="regST" value="ST">
+        <label for="regST">ST</label>
+    </div>
+    <div class="check">
+        <input type="checkbox" id="regOMF" value="OMF">
+        <label for="regOMF">OMF</label>
+    </div>
+    <div class="check">
+        <input type="checkbox" id="regCMF" value="CMF">
+        <label for="regCMF">CMF</label>
+    </div>
+    <div class="check">
+        <input type="checkbox" id="regLMF" value="LMF">
+        <label for="regLMF">LMF</label>
+    </div>
+    <div class="check">
+        <input type="checkbox" id="regRMF" value="RMF">
+        <label for="regRMF">RMF</label>
+    </div>
+    <div class="check">
+        <input type="checkbox" id="regDMF" value="DMF">
+        <label for="regDMF">DMF</label>
+    </div>
+    <div class="check">
+        <input type="checkbox" id="regLSB" value="LSB">
+        <label for="regLSB">LSB</label>
+    </div>
+    <div class="check">
+        <input type="checkbox" id="regRSB" value="RSB">
+        <label for="regRSB">RSB</label>
+    </div>
+    <div class="check">
+        <input type="checkbox" id="regCB" value="CB">
+        <label for="regCB">CB</label>
+    </div>
+    <div class="check">
+        <input type="checkbox" id="regGK" value="GK">
+        <label for="regGK">GK</label>
+    </div>
+</div>
+<div id="registerSelected" class="selected-text">
+    選択なし
+</div>
+<label for="playStyle">プレースタイル</label>
+<select id="playStyle">
+    <option value="">メインポジションを選択してください</option>
+</select>
+<button class="green" id="addButton">
+    選手を追加
+</button>
+<p>
+    登録人数：
+    <strong id="count">0</strong>
+    / 31人
+</p>
+</section>
+<!-- 共有 -->
+<div class="share-area">
+    <button class="black" id="shareButton">
+        🔗 このオーダーを共有
+    </button>
+</div>
+<!-- スタメン・ベンチ -->
+<div class="order-area">
+<div class="field-wrapper">
+    <h2 class="field-title">
+        スタメン（11人）
+    </h2>
+    <div id="field" class="field">
+        <div class="field-line-horizontal"></div>
+        <div class="center-circle"></div>
+        <div class="penalty-area penalty-top"></div>
+        <div class="penalty-area penalty-bottom"></div>
+        <!-- 希望ポジション表示 -->
+        <div class="zone" data-position="GK"
+             style="left:50%;top:90%">GK</div>
+        <div class="zone" data-position="CB"
+             style="left:50%;top:72%">CB</div>
+        <div class="zone" data-position="LSB"
+             style="left:15%;top:72%">LSB</div>
+        <div class="zone" data-position="RSB"
+             style="left:85%;top:72%">RSB</div>
+        <div class="zone" data-position="DMF"
+             style="left:50%;top:58%">DMF</div>
+        <div class="zone" data-position="LMF"
+             style="left:20%;top:48%">LMF</div>
+        <div class="zone" data-position="RMF"
+             style="left:80%;top:48%">RMF</div>
+        <div class="zone" data-position="CMF"
+             style="left:50%;top:45%">CMF</div>
+        <div class="zone" data-position="LWG"
+             style="left:20%;top:30%">LWG</div>
+        <div class="zone" data-position="RWG"
+             style="left:80%;top:30%">RWG</div>
+        <div class="zone" data-position="OMF"
+             style="left:50%;top:30%">OMF</div>
+        <div class="zone" data-position="ST"
+             style="left:50%;top:20%">ST</div>
+        <div class="zone" data-position="CF"
+             style="left:50%;top:10%">CF</div>
+    </div>
+</div>
+<!-- ベンチ -->
+<section class="bench">
+    <h2>ベンチ（20人まで）</h2>
+    <div id="benchList"></div>
+    <p class="selected-text">
+        選手を別の選手の上までドラッグすると入れ替えできます。
+    </p>
+</section>
+</div>
+<!-- 選手情報 -->
+<section id="info" class="info">
+<h2 id="infoName"></h2>
+<p>
+    背番号：
+    <span id="infoNumber"></span>
+</p>
+<p>
+    現在位置：
+    <strong id="infoCurrent"></strong>
+</p>
+<p>
+    メインポジション：
+    <span id="infoMain"></span>
+</p>
+<p>
+    サブポジション：
+    <span id="infoSub"></span>
+</p>
+<div class="style-box">
+    <strong id="infoStyle"></strong>
+    <p id="infoEffect"></p>
+</div>
+<div class="info-buttons">
+    <button class="blue" id="editButton">
+        編集
+    </button>
+    <button class="red" id="deleteButton">
+        削除
+    </button>
+</div>
+<!-- 編集 -->
+<div id="editArea">
+    <h3>選手情報を編集</h3>
+    <label for="editName">名前</label>
+    <input id="editName" type="text">
+    <label for="editNumber">背番号</label>
+    <input id="editNumber" type="number">
+    <label for="editMain">メインポジション</label>
+    <!-- 編集側もHTMLに直接記述 -->
+    <select id="editMain">
+        <option value="">選択してください</option>
+        <option value="CF">CF</option>
+        <option value="RWG">RWG</option>
+        <option value="LWG">LWG</option>
+        <option value="ST">ST</option>
+        <option value="OMF">OMF</option>
+        <option value="CMF">CMF</option>
+        <option value="LMF">LMF</option>
+        <option value="RMF">RMF</option>
+        <option value="DMF">DMF</option>
+        <option value="LSB">LSB</option>
+        <option value="RSB">RSB</option>
+        <option value="CB">CB</option>
+        <option value="GK">GK</option>
+    </select>
+    <label>サブポジション（複数選択可）</label>
+    <div id="editSub" class="multi">
+        <div class="check">
+            <input type="checkbox" id="editCF" value="CF">
+            <label for="editCF">CF</label>
+        </div>
+        <div class="check">
+            <input type="checkbox" id="editRWG" value="RWG">
+            <label for="editRWG">RWG</label>
+        </div>
+        <div class="check">
+            <input type="checkbox" id="editLWG" value="LWG">
+            <label for="editLWG">LWG</label>
+        </div>
+        <div class="check">
+            <input type="checkbox" id="editST" value="ST">
+            <label for="editST">ST</label>
+        </div>
+        <div class="check">
+            <input type="checkbox" id="editOMF" value="OMF">
+            <label for="editOMF">OMF</label>
+        </div>
+        <div class="check">
+            <input type="checkbox" id="editCMF" value="CMF">
+            <label for="editCMF">CMF</label>
+        </div>
+        <div class="check">
+            <input type="checkbox" id="editLMF" value="LMF">
+            <label for="editLMF">LMF</label>
+        </div>
+        <div class="check">
+            <input type="checkbox" id="editRMF" value="RMF">
+            <label for="editRMF">RMF</label>
+        </div>
+        <div class="check">
+            <input type="checkbox" id="editDMF" value="DMF">
+            <label for="editDMF">DMF</label>
+        </div>
+        <div class="check">
+            <input type="checkbox" id="editLSB" value="LSB">
+            <label for="editLSB">LSB</label>
+        </div>
+        <div class="check">
+            <input type="checkbox" id="editRSB" value="RSB">
+            <label for="editRSB">RSB</label>
+        </div>
+        <div class="check">
+            <input type="checkbox" id="editCB" value="CB">
+            <label for="editCB">CB</label>
+        </div>
+        <div class="check">
+            <input type="checkbox" id="editGK" value="GK">
+            <label for="editGK">GK</label>
+        </div>
+    </div>
+    <div id="editSelected" class="selected-text">
+        選択なし
+    </div>
+    <label for="editStyle">プレースタイル</label>
+    <select id="editStyle">
+        <option value="">選択してください</option>
+    </select>
+    <div class="edit-buttons">
+        <button class="green" id="saveEditButton">
+            保存
+        </button>
+        <button class="gray" id="cancelEditButton">
+            キャンセル
+        </button>
+    </div>
+</div>
+</section>
+</main>
+<script>
+/* =========================================================
+   ポジション
+========================================================= */
+const POSITIONS = [
+    "CF",
+    "RWG",
+    "LWG",
+    "ST",
+    "OMF",
+    "CMF",
+    "LMF",
+    "RMF",
+    "DMF",
+    "LSB",
+    "RSB",
+    "CB",
+    "GK"
+];
+/* =========================================================
+   プレースタイル
+========================================================= */
+const PLAY_STYLES = {
+    "守備的GK": {
+        effect: "自陣ゴールマウス近くにポジショニングします。",
+        positions: ["GK"]
+    },
+    "攻撃的GK": {
+        effect: "積極的に飛び出して、ディフェンスラインの裏をカバーします。",
+        positions: ["GK"]
+    },
+    "インナーラップサイドバック": {
+        effect: "高めのポジションを取り、相手ゴール近くでは中に入って攻撃に参加します。",
+        positions: ["RSB", "LSB"]
+    },
+    "守備的サイドバック": {
+        effect: "常に低めのポジションを取り、守備を重視して行動します。",
+        positions: ["RSB", "LSB"]
+    },
+    "攻撃的サイドバック": {
+        effect: "常に高めのポジションを取り、積極的に攻撃に参加します。",
+        positions: ["RSB", "LSB"]
+    },
+    "オーバーラップ": {
+        effect: "前線での攻撃参加を好むディフェンダーです。",
+        positions: ["CB"]
+    },
+    "ビルドアップ": {
+        effect: "後ろから攻撃の組み立てに参加し、前線へのロングフィードも狙います。",
+        positions: ["CB"]
+    },
+    "プレーメイカー": {
+        effect: "攻撃時は低めのポジションから攻撃の起点となります。",
+        positions: ["CMF", "DMF"]
+    },
+    "ハードプレス": {
+        effect: "激しい当たりで攻撃の芽を摘みます。",
+        positions: ["CMF", "DMF", "CB"]
+    },
+    "アンカー": {
+        effect: "中盤の底に位置して守備を安定させます。",
+        positions: ["DMF"]
+    },
+    "ボックストゥボックス": {
+        effect: "フィールドの隅から隅まで動き回り、攻守に貢献します。",
+        positions: ["RMF", "LMF", "CMF", "DMF"]
+    },
+    "2列目からの飛び出し": {
+        effect: "攻撃時には常にゴール前に出ることを意識します。",
+        positions: ["ST", "OMF", "RMF", "LMF", "CMF"]
+    },
+    "ナンバー10": {
+        effect: "動き回らず、パスで試合を組み立てるタイプの司令塔です。",
+        positions: ["ST", "OMF", "CMF"]
+    },
+    "クロサー": {
+        effect: "タッチライン際にポジションを取り、クロスを狙います。",
+        positions: ["RWG", "LWG", "RMF", "LMF"]
+    },
+    "インサイドレシーバー": {
+        effect: "サイドから中に入ってパスをもらう動きをします。",
+        positions: ["RWG", "LWG", "RMF", "LMF"]
+    },
+    "ウイングストライカー": {
+        effect: "タッチライン際でパスを待ち、中へのドリブルを狙います。",
+        positions: ["RWG", "LWG"]
+    },
+    "チャンスメイカー": {
+        effect: "どこにでも顔を出して攻撃の組み立てやラストパスを狙います。",
+        positions: ["ST", "RWG", "LWG", "OMF", "RMF", "LMF"]
+    },
+    "リンクフォワード": {
+        effect: "前線からボールをもらいに下がってきて、チャンスを作ります。",
+        positions: ["CF", "ST"]
+    },
+    "ターゲットマン": {
+        effect: "前線の深い位置で体を張ってポストプレーをします。",
+        positions: ["CF"]
+    },
+    "ボックスストライカー": {
+        effect: "動き回らずに中央でボールが来るのを待ちます。",
+        positions: ["CF"]
+    },
+    "デコイラン": {
+        effect: "おとりとなる動きを行い、味方が攻めやすくなるようにします。",
+        positions: ["CF", "ST", "OMF"]
+    },
+    "ラインブレイカー": {
+        effect: "裏へ抜ける動きをします。",
+        positions: ["CF"]
+    }
+};
+/* =========================================================
+   状態
+========================================================= */
+let players = [];
+let selectedPlayerId = null;
+let dragState = {
+    active: false,
+    playerId: null,
+    element: null,
+    moved: false,
+    startX: 0,
+    startY: 0
+};
+/* =========================================================
+   初期化
+========================================================= */
+document.addEventListener("DOMContentLoaded", function() {
+    loadFromURL();
+    updateSelectedText(
+        "registerSub",
+        "registerSelected"
+    );
+    document
+        .querySelectorAll(
+            "#registerSub input[type='checkbox']"
+        )
+        .forEach(function(input) {
+            input.addEventListener(
+                "change",
+                function() {
+                    updateSelectedText(
+                        "registerSub",
+                        "registerSelected"
+                    );
+                }
+            );
+        });
+    document
+        .querySelectorAll(
+            "#editSub input[type='checkbox']"
+        )
+        .forEach(function(input) {
+            input.addEventListener(
+                "change",
+                function() {
+                    updateSelectedText(
+                        "editSub",
+                        "editSelected"
+                    );
+                }
+            );
+        });
+    document
+        .getElementById("mainPosition")
+        .addEventListener(
+            "change",
+            function() {
+                updateStyleSelect(
+                    "playStyle",
+                    this.value,
+                    ""
+                );
+            }
+        );
+    document
+        .getElementById("editMain")
+        .addEventListener(
+            "change",
+            function() {
+                updateStyleSelect(
+                    "editStyle",
+                    this.value,
+                    ""
+                );
+            }
+        );
+    document
+        .getElementById("addButton")
+        .addEventListener(
+            "click",
+            addPlayer
+        );
+    document
+        .getElementById("shareButton")
+        .addEventListener(
+            "click",
+            copyShareLink
+        );
+    document
+        .getElementById("editButton")
+        .addEventListener(
+            "click",
+            startEdit
+        );
+    document
+        .getElementById("deleteButton")
+        .addEventListener(
+            "click",
+            deleteSelected
+        );
+    document
+        .getElementById("saveEditButton")
+        .addEventListener(
+            "click",
+            saveEdit
+        );
+    document
+        .getElementById("cancelEditButton")
+        .addEventListener(
+            "click",
+            cancelEdit
+        );
+    render();
+});
+/* =========================================================
+   サブポジション取得
+========================================================= */
+function getCheckedPositions(containerId) {
+    const container =
+        document.getElementById(containerId);
+    return Array.from(
+        container.querySelectorAll(
+            "input[type='checkbox']:checked"
+        )
+    ).map(function(input) {
+        return input.value;
+    });
+}
+function updateSelectedText(
+    containerId,
+    textId
+) {
+    const selected =
+        getCheckedPositions(containerId);
+    document.getElementById(textId)
+        .textContent =
+        selected.length > 0
+            ? "選択中：" + selected.join(" / ")
+            : "選択なし";
+}
+/* =========================================================
+   プレースタイル
+========================================================= */
+function updateStyleSelect(
+    selectId,
+    position,
+    currentStyle
+) {
+    const select =
+        document.getElementById(selectId);
+    select.innerHTML =
+        '<option value="">選択してください</option>';
+    if (!position) {
+        return;
+    }
+    Object.keys(PLAY_STYLES).forEach(
+        function(styleName) {
+            const style =
+                PLAY_STYLES[styleName];
+            if (
+                style.positions.includes(position)
+            ) {
+                const option =
+                    document.createElement("option");
+                option.value =
+                    styleName;
+                option.textContent =
+                    styleName;
+                if (
+                    styleName === currentStyle
+                ) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            }
+        }
+    );
+}
+/* =========================================================
+   選手追加
+========================================================= */
+function addPlayer() {
+    if (players.length >= 31) {
+        alert(
+            "選手は31人まで登録できます。"
+        );
+        return;
+    }
+    const name =
+        document.getElementById(
+            "nameInput"
+        ).value.trim();
+    const number =
+        document.getElementById(
+            "numberInput"
+        ).value.trim();
+    const main =
+        document.getElementById(
+            "mainPosition"
+        ).value;
+    const sub =
+        getCheckedPositions(
+            "registerSub"
+        ).filter(function(position) {
+            return position !== main;
+        });
+    const style =
+        document.getElementById(
+            "playStyle"
+        ).value;
+    if (!name || !number || !main) {
+        alert(
+            "名前・背番号・メインポジションを入力してください。"
+        );
+        return;
+    }
+    const starterCount =
+        players.filter(function(player) {
+            return player.starter;
+        }).length;
+    const player = {
+        id:
+            Date.now().toString() +
+            Math.random()
+                .toString(36)
+                .slice(2),
+        name: name,
+        number: number,
+        main: main,
+        sub: sub,
+        style: style,
+        starter:
+            starterCount < 11,
+        x: 50,
+        y: 50
+    };
+    const defaultPositions = [
+        [50,90],
+        [15,72],
+        [35,72],
+        [50,72],
+        [65,72],
+        [85,72],
+        [25,50],
+        [50,50],
+        [75,50],
+        [35,20],
+        [65,20]
+    ];
+    if (player.starter) {
+        player.x =
+            defaultPositions[
+                starterCount
+            ][0];
+        player.y =
+            defaultPositions[
+                starterCount
+            ][1];
+    }
+    players.push(player);
+    clearRegister();
+    render();
+}
+/* =========================================================
+   登録フォームクリア
+========================================================= */
+function clearRegister() {
+    document.getElementById(
+        "nameInput"
+    ).value = "";
+    document.getElementById(
+        "numberInput"
+    ).value = "";
+    document.getElementById(
+        "mainPosition"
+    ).value = "";
+    document.getElementById(
+        "playStyle"
+    ).innerHTML =
+        '<option value="">メインポジションを選択してください</option>';
+    document
+        .querySelectorAll(
+            "#registerSub input[type='checkbox']"
+        )
+        .forEach(function(input) {
+            input.checked = false;
+        });
+    updateSelectedText(
+        "registerSub",
+        "registerSelected"
+    );
+}
+/* =========================================================
+   描画
+========================================================= */
+function render() {
+    const field =
+        document.getElementById("field");
+    const bench =
+        document.getElementById("benchList");
+    field
+        .querySelectorAll(".player")
+        .forEach(function(element) {
+            element.remove();
+        });
+    bench.innerHTML = "";
+    players
+        .filter(function(player) {
+            return player.starter;
+        })
+        .forEach(function(player) {
+            const element =
+                document.createElement("div");
+            element.className =
+                "player";
+            element.dataset.playerId =
+                player.id;
+            element.style.left =
+                player.x + "%";
+            element.style.top =
+                player.y + "%";
+            element.innerHTML =
+                escapeHTML(player.number) +
+                '<div class="player-name">' +
+                escapeHTML(player.name) +
+                '</div>';
+            field.appendChild(element);
+            setupStarterDrag(
+                element,
+                player
+            );
+        });
+    players
+        .filter(function(player) {
+            return !player.starter;
+        })
+        .forEach(function(player) {
+            const element =
+                document.createElement("div");
+            element.className =
+                "bench-player";
+            element.dataset.playerId =
+                player.id;
+            element.innerHTML =
+                '<div class="bench-number">' +
+                escapeHTML(player.number) +
+                '</div>' +
+                '<div>' +
+                '<div class="bench-name">' +
+                escapeHTML(player.name) +
+                '</div>' +
+                '<div class="bench-position">' +
+                escapeHTML(player.main) +
+                '</div>' +
+                '</div>';
+            bench.appendChild(element);
+            setupBenchDrag(
+                element,
+                player
+            );
+        });
+    document.getElementById(
+        "count"
+    ).textContent =
+        players.length;
+}
+/* =========================================================
+   スタメンドラッグ
+========================================================= */
+function setupStarterDrag(
+    element,
+    player
+) {
+    element.addEventListener(
+        "pointerdown",
+        function(event) {
+            event.preventDefault();
+            dragState.active = true;
+            dragState.playerId = player.id;
+            dragState.element = element;
+            dragState.moved = false;
+            dragState.startX = event.clientX;
+            dragState.startY = event.clientY;
+            element.setPointerCapture(
+                event.pointerId
+            );
+            showPreferredPositions(player);
+        }
+    );
+    element.addEventListener(
+        "pointermove",
+        function(event) {
+            if (
+                !dragState.active ||
+                dragState.playerId !== player.id
+            ) {
+                return;
+            }
+            if (
+                Math.abs(
+                    event.clientX -
+                    dragState.startX
+                ) > 5 ||
+                Math.abs(
+                    event.clientY -
+                    dragState.startY
+                ) > 5
+            ) {
+                dragState.moved = true;
+            }
+            const field =
+                document.getElementById("field");
+            const rect =
+                field.getBoundingClientRect();
+            player.x =
+                clamp(
+                    (
+                        event.clientX -
+                        rect.left
+                    ) /
+                    rect.width *
+                    100,
+                    2,
+                    98
+                );
+            player.y =
+                clamp(
+                    (
+                        event.clientY -
+                        rect.top
+                    ) /
+                    rect.height *
+                    100,
+                    2,
+                    98
+                );
+            element.style.left =
+                player.x + "%";
+            element.style.top =
+                player.y + "%";
+            clearDropHighlights();
+            highlightDropTarget(
+                event.clientX,
+                event.clientY
+            );
+        }
+    );
+    element.addEventListener(
+        "pointerup",
+        function(event) {
+            if (
+                !dragState.active ||
+                dragState.playerId !== player.id
+            ) {
+                return;
+            }
+            const target =
+                getPlayerAtPoint(
+                    event.clientX,
+                    event.clientY,
+                    player.id
+                );
+            if (target) {
+                swapPlayers(
+                    player,
+                    target
+                );
+            }
+            const wasMoved =
+                dragState.moved;
+            finishDrag();
+            render();
+            if (!wasMoved) {
+                showPlayerInfo(player);
+            }
+        }
+    );
+    element.addEventListener(
+        "pointercancel",
+        function() {
+            finishDrag();
+            render();
+        }
+    );
+}
+/* =========================================================
+   ベンチドラッグ
+========================================================= */
+function setupBenchDrag(
+    element,
+    player
+) {
+    element.addEventListener(
+        "pointerdown",
+        function(event) {
+            event.preventDefault();
+            dragState.active = true;
+            dragState.playerId = player.id;
+            dragState.element = element;
+            dragState.moved = false;
+            dragState.startX = event.clientX;
+            dragState.startY = event.clientY;
+            element.setPointerCapture(
+                event.pointerId
+            );
+        }
+    );
+    element.addEventListener(
+        "pointermove",
+        function(event) {
+            if (
+                !dragState.active ||
+                dragState.playerId !== player.id
+            ) {
+                return;
+            }
+            if (
+                Math.abs(
+                    event.clientX -
+                    dragState.startX
+                ) > 5 ||
+                Math.abs(
+                    event.clientY -
+                    dragState.startY
+                ) > 5
+            ) {
+                dragState.moved = true;
+            }
+            clearDropHighlights();
+            highlightDropTarget(
+                event.clientX,
+                event.clientY
+            );
+        }
+    );
+    element.addEventListener(
+        "pointerup",
+        function(event) {
+            if (
+                !dragState.active ||
+                dragState.playerId !== player.id
+            ) {
+                return;
+            }
+            const target =
+                getPlayerAtPoint(
+                    event.clientX,
+                    event.clientY,
+                    player.id
+                );
+            if (target) {
+                swapPlayers(
+                    player,
+                    target
+                );
+            }
+            const wasMoved =
+                dragState.moved;
+            finishDrag();
+            render();
+            if (!wasMoved) {
+                showPlayerInfo(player);
+            }
+        }
+    );
+    element.addEventListener(
+        "pointercancel",
+        function() {
+            finishDrag();
+            render();
+        }
+    );
+}
+/* =========================================================
+   ドロップ対象
+========================================================= */
+function getPlayerAtPoint(
+    x,
+    y,
+    excludeId
+) {
+    const elements =
+        document.elementsFromPoint(
+            x,
+            y
+        );
+    for (
+        let i = 0;
+        i < elements.length;
+        i++
+    ) {
+        const element =
+            elements[i];
+        const id =
+            element.dataset.playerId;
+        if (
+            id &&
+            id !== excludeId
+        ) {
+            const player =
+                players.find(function(item) {
+                    return item.id === id;
+                });
+            if (player) {
+                return player;
+            }
+        }
+    }
+    return null;
+}
+/* =========================================================
+   入れ替え
+========================================================= */
+function swapPlayers(
+    playerA,
+    playerB
+) {
+    const aStarter =
+        playerA.starter;
+    const bStarter =
+        playerB.starter;
+    /* スタメン同士 */
+    if (
+        aStarter &&
+        bStarter
+    ) {
+        const ax =
+            playerA.x;
+        const ay =
+            playerA.y;
+        playerA.x =
+            playerB.x;
+        playerA.y =
+            playerB.y;
+        playerB.x =
+            ax;
+        playerB.y =
+            ay;
+        return;
+    }
+    /* スタメン ⇔ ベンチ */
+    if (
+        aStarter !== bStarter
+    ) {
+        if (aStarter) {
+            const x =
+                playerA.x;
+            const y =
+                playerA.y;
+            playerA.starter =
+                false;
+            playerB.starter =
+                true;
+            playerB.x =
+                x;
+            playerB.y =
+                y;
+        } else {
+            const x =
+                playerB.x;
+            const y =
+                playerB.y;
+            playerB.starter =
+                false;
+            playerA.starter =
+                true;
+            playerA.x =
+                x;
+            playerA.y =
+                y;
+        }
+        return;
+    }
+    /* ベンチ同士 */
+    const indexA =
+        players.indexOf(playerA);
+    const indexB =
+        players.indexOf(playerB);
+    if (
+        indexA !== -1 &&
+        indexB !== -1
+    ) {
+        const temp =
+            players[indexA];
+        players[indexA] =
+            players[indexB];
+        players[indexB] =
+            temp;
+    }
+}
+/* =========================================================
+   ドラッグ終了
+========================================================= */
+function finishDrag() {
+    dragState.active = false;
+    dragState.playerId = null;
+    dragState.element = null;
+    hidePreferredPositions();
+    clearDropHighlights();
+}
+function highlightDropTarget(
+    x,
+    y
+) {
+    const target =
+        getPlayerAtPoint(
+            x,
+            y,
+            dragState.playerId
+        );
+    if (!target) {
+        return;
+    }
+    const element =
+        document.querySelector(
+            '[data-player-id="' +
+            CSS.escape(target.id) +
+            '"]'
+        );
+    if (element) {
+        element.classList.add(
+            "drop-highlight"
+        );
+    }
+}
+function clearDropHighlights() {
+    document
+        .querySelectorAll(
+            ".drop-highlight"
+        )
+        .forEach(function(element) {
+            element.classList.remove(
+                "drop-highlight"
+            );
+        });
+}
+/* =========================================================
+   希望ポジション表示
+========================================================= */
+function showPreferredPositions(
+    player
+) {
+    document
+        .querySelectorAll(".zone")
+        .forEach(function(zone) {
+            zone.classList.remove(
+                "main-position",
+                "sub-position"
+            );
+            const position =
+                zone.dataset.position;
+            if (
+                position === player.main
+            ) {
+                zone.classList.add(
+                    "main-position"
+                );
+            } else if (
+                player.sub.includes(position)
+            ) {
+                zone.classList.add(
+                    "sub-position"
+                );
+            }
+        });
+}
+function hidePreferredPositions() {
+    document
+        .querySelectorAll(".zone")
+        .forEach(function(zone) {
+            zone.classList.remove(
+                "main-position",
+                "sub-position"
+            );
+        });
+}
+/* =========================================================
+   選手情報表示
+========================================================= */
+function showPlayerInfo(player) {
+    selectedPlayerId =
+        player.id;
+    document.getElementById(
+        "info"
+    ).style.display =
+        "block";
+    document.getElementById(
+        "editArea"
+    ).style.display =
+        "none";
+    document.getElementById(
+        "infoName"
+    ).textContent =
+        player.name;
+    document.getElementById(
+        "infoNumber"
+    ).textContent =
+        player.number;
+    document.getElementById(
+        "infoCurrent"
+    ).textContent =
+        player.starter
+            ? getCurrentPosition(player)
+            : "ベンチ";
+    document.getElementById(
+        "infoMain"
+    ).textContent =
+        player.main;
+    document.getElementById(
+        "infoSub"
+    ).textContent =
+        player.sub.length > 0
+            ? player.sub.join(" / ")
+            : "なし";
+    document.getElementById(
+        "infoStyle"
+    ).textContent =
+        player.style || "未設定";
+    document.getElementById(
+        "infoEffect"
+    ).textContent =
+        player.style &&
+        PLAY_STYLES[player.style]
+            ? PLAY_STYLES[player.style].effect
+            : "";
+}
+/* =========================================================
+   現在位置
+========================================================= */
+const POSITION_COORDINATES = {
+    GK: [50,90],
+    CB: [50,72],
+    LSB: [15,72],
+    RSB: [85,72],
+    DMF: [50,58],
+    LMF: [20,48],
+    RMF: [80,48],
+    CMF: [50,45],
+    LWG: [20,30],
+    RWG: [80,30],
+    OMF: [50,30],
+    ST: [50,20],
+    CF: [50,10]
+};
+function getCurrentPosition(player) {
+    let closest = "";
+    let shortest = Infinity;
+    Object.keys(
+        POSITION_COORDINATES
+    ).forEach(function(position) {
+        const coordinates =
+            POSITION_COORDINATES[position];
+        const x =
+            coordinates[0];
+        const y =
+            coordinates[1];
+        const distance =
+            Math.sqrt(
+                Math.pow(
+                    player.x - x,
+                    2
+                ) +
+                Math.pow(
+                    player.y - y,
+                    2
+                )
+            );
+        if (
+            distance < shortest
+        ) {
+            shortest =
+                distance;
+            closest =
+                position;
+        }
+    });
+    return closest;
+}
+/* =========================================================
+   編集
+========================================================= */
+function startEdit() {
+    const player =
+        players.find(function(item) {
+            return item.id ===
+                selectedPlayerId;
+        });
+    if (!player) {
+        return;
+    }
+    document.getElementById(
+        "editArea"
+    ).style.display =
+        "block";
+    document.getElementById(
+        "editName"
+    ).value =
+        player.name;
+    document.getElementById(
+        "editNumber"
+    ).value =
+        player.number;
+    document.getElementById(
+        "editMain"
+    ).value =
+        player.main;
+    document
+        .querySelectorAll(
+            "#editSub input[type='checkbox']"
+        )
+        .forEach(function(input) {
+            input.checked =
+                player.sub.includes(
+                    input.value
+                );
+        });
+    updateSelectedText(
+        "editSub",
+        "editSelected"
+    );
+    updateStyleSelect(
+        "editStyle",
+        player.main,
+        player.style
+    );
+}
+function saveEdit() {
+    const player =
+        players.find(function(item) {
+            return item.id ===
+                selectedPlayerId;
+        });
+    if (!player) {
+        return;
+    }
+    const name =
+        document.getElementById(
+            "editName"
+        ).value.trim();
+    const number =
+        document.getElementById(
+            "editNumber"
+        ).value.trim();
+    const main =
+        document.getElementById(
+            "editMain"
+        ).value;
+    const sub =
+        getCheckedPositions(
+            "editSub"
+        ).filter(function(position) {
+            return position !== main;
+        });
+    const style =
+        document.getElementById(
+            "editStyle"
+        ).value;
+    if (
+        !name ||
+        !number ||
+        !main
+    ) {
+        alert(
+            "名前・背番号・メインポジションを入力してください。"
+        );
+        return;
+    }
+    player.name =
+        name;
+    player.number =
+        number;
+    player.main =
+        main;
+    player.sub =
+        sub;
+    player.style =
+        style;
+    render();
+    showPlayerInfo(player);
+}
+function cancelEdit() {
+    document.getElementById(
+        "editArea"
+    ).style.display =
+        "none";
+}
+/* =========================================================
+   削除
+========================================================= */
+function deleteSelected() {
+    const player =
+        players.find(function(item) {
+            return item.id ===
+                selectedPlayerId;
+        });
+    if (!player) {
+        return;
+    }
+    if (
+        !confirm(
+            player.name +
+            "を削除しますか？"
+        )
+    ) {
+        return;
+    }
+    players =
+        players.filter(function(item) {
+            return item.id !==
+                player.id;
+        });
+    selectedPlayerId =
+        null;
+    document.getElementById(
+        "info"
+    ).style.display =
+        "none";
+    render();
+}
+/* =========================================================
+   共有URL
+========================================================= */
+function createShareURL() {
+    const data = {
+        players: players
+    };
+    const json =
+        JSON.stringify(data);
+    const bytes =
+        new TextEncoder()
+            .encode(json);
+    let binary = "";
+    bytes.forEach(function(byte) {
+        binary +=
+            String.fromCharCode(byte);
+    });
+    const base64 =
+        btoa(binary);
+    return (
+        location.origin +
+        location.pathname +
+        "?order=" +
+        encodeURIComponent(base64)
+    );
+}
+async function copyShareLink() {
+    const url =
+        createShareURL();
+    try {
+        await navigator.clipboard.writeText(
+            url
+        );
+        alert(
+            "共有リンクをコピーしました！\nLINEなどに貼り付けて送ってください。"
+        );
+    } catch (error) {
+        window.prompt(
+            "以下のリンクをコピーしてください。",
+            url
+        );
+    }
+}
+/* =========================================================
+   URL読み込み
+========================================================= */
+function loadFromURL() {
+    const params =
+        new URLSearchParams(
+            window.location.search
+        );
+    const encoded =
+        params.get("order");
+    if (!encoded) {
+        return;
+    }
+    try {
+        const binary =
+            atob(
+                decodeURIComponent(
+                    encoded
+                )
+            );
+        const bytes =
+            Uint8Array.from(
+                binary,
+                function(char) {
+                    return char.charCodeAt(0);
+                }
+            );
+        const json =
+            new TextDecoder()
+                .decode(bytes);
+        const data =
+            JSON.parse(json);
+        if (
+            data &&
+            Array.isArray(data.players)
+        ) {
+            players =
+                data.players;
+        }
+    } catch (error) {
+        console.error(
+            "共有データの読み込みエラー",
+            error
+        );
+        alert(
+            "共有リンクのデータを読み込めませんでした。"
+        );
+    }
+}
+/* =========================================================
+   補助
+========================================================= */
+function clamp(
+    value,
+    min,
+    max
+) {
+    return Math.max(
+        min,
+        Math.min(
+            max,
+            value
+        )
+    );
+}
+function escapeHTML(value) {
+    return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+</script>
+</body>
+</html>
